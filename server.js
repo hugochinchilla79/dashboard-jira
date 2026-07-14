@@ -13,6 +13,8 @@ const {
   PORT = 3000,
   CACHE_TTL_SECONDS = 300,
   PLATFORM_DETECTION = 'true',
+  AUTH_USER,
+  AUTH_PASSWORD,
 } = process.env;
 
 const cacheTTL = Number(CACHE_TTL_SECONDS) * 1000;
@@ -98,6 +100,7 @@ async function fetchAllIssues(projectKey) {
       summary: f.summary,
       type: f.issuetype?.name ?? 'Desconocido',
       status: f.status?.name ?? 'Desconocido',
+      statusCategory: f.status?.statusCategory?.key ?? 'undefined',
       assignee: f.assignee?.displayName ?? 'Sin asignar',
       priority: f.priority?.name ?? 'Sin prioridad',
       created: normalizeDate(f.created),
@@ -110,6 +113,22 @@ async function fetchAllIssues(projectKey) {
     };
   });
 }
+
+// ── HTTP BASIC AUTH ──
+function basicAuth(req, res, next) {
+  if (!AUTH_USER || !AUTH_PASSWORD) return next(); // sin credenciales configuradas, pasa libre
+
+  const header = req.headers['authorization'] || '';
+  const b64 = header.startsWith('Basic ') ? header.slice(6) : '';
+  const [user, pass] = Buffer.from(b64, 'base64').toString().split(':');
+
+  if (user === AUTH_USER && pass === AUTH_PASSWORD) return next();
+
+  res.set('WWW-Authenticate', 'Basic realm="Dashboard Jira"');
+  res.status(401).send('Acceso no autorizado');
+}
+
+app.use(basicAuth);
 
 // Static files
 app.use(express.static(join(__dirname, 'public')));

@@ -25,6 +25,15 @@
     --accent-sky: #0ea5e9;
   }
 
+  :root.light {
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: rgba(0,0,0,.08);
+    --text: #1e293b;
+    --muted: #94a3b8;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -55,7 +64,7 @@
     pointer-events: none;
   }
   .header-left { display: flex; align-items: center; gap: 16px; position: relative; }
-  .header-icon { font-size: 2.2rem; filter: drop-shadow(0 4px 14px rgba(99,102,241,.4)); }
+  .header-icon { display: flex; align-items: center; filter: drop-shadow(0 4px 14px rgba(99,102,241,.4)); }
   .header-title { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: -.5px; }
   .header-title span { color: var(--accent-indigo); }
   .header-meta { font-size: .75rem; color: var(--muted); }
@@ -89,6 +98,31 @@
   }
   .btn-refresh:hover { background: rgba(99,102,241,.3); }
   .btn-refresh.loading { opacity: .6; pointer-events: none; }
+
+  .btn-theme {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 10px; font-size: 1rem;
+    cursor: pointer; transition: all .2s;
+    line-height: 1;
+  }
+  .btn-theme:hover { border-color: var(--accent-indigo); color: var(--accent-indigo); }
+
+  :root.light .header {
+    background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #eef2ff 100%);
+  }
+  :root.light .key-badge { background: rgba(99,102,241,.1); }
+  :root.light .project-select { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); }
+  :root.light .filter-group select,
+  :root.light .filter-search input { background: #f8fafc; border-color: rgba(0,0,0,.1); }
+  :root.light .loading-overlay { background: rgba(241,245,249,.9); }
+  :root.light .kpi-value {
+    background: none;
+    -webkit-text-fill-color: var(--kpi-accent);
+    color: var(--kpi-accent);
+  }
 
   /* ── LAYOUT ── */
   .container { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
@@ -127,6 +161,17 @@
     line-height: 1;
   }
   .kpi-label { font-size: .72rem; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi-progress-bar {
+    width: 100%; height: 4px;
+    background: rgba(255,255,255,.07);
+    border-radius: 2px; margin-top: 12px; overflow: hidden;
+  }
+  .kpi-progress-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--kpi-accent);
+    transition: width .6s ease;
+  }
+  .kpi-sublabel { font-size: .68rem; color: var(--muted); margin-top: 5px; }
 
   /* ── FILTERS ── */
   .filters-bar {
@@ -238,7 +283,7 @@
   th:hover { color: var(--text); }
   td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,.02); }
+  tr:hover td { background: rgba(0,0,0,.02); }
 
   .key-badge {
     font-family: monospace; font-size: .75rem;
@@ -298,6 +343,32 @@
   }
   .state-box .icon { font-size: 2.5rem; margin-bottom: 12px; }
 
+  /* ── LOADING OVERLAY ── */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,15,26,.85);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .loading-overlay.visible { opacity: 1; pointer-events: all; }
+  .loading-content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  .spinner {
+    width: 54px; height: 54px;
+    border: 3px solid rgba(99,102,241,.15);
+    border-top-color: var(--accent-indigo);
+    border-radius: 50%;
+    animation: spin .85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 1rem; font-weight: 500; letter-spacing: .08em;
+    color: var(--muted);
+  }
+  #loading-dots { display: inline-block; min-width: 22px; }
+
   /* PAGINATION */
   .pagination {
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -321,7 +392,13 @@
 <!-- HEADER -->
 <header class="header">
   <div class="header-left">
-    <div class="header-icon">📊</div>
+    <div class="header-icon">
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2"  y="22" width="8" height="14" rx="2.5" fill="#6366f1" opacity=".55"/>
+        <rect x="15" y="13" width="8" height="23" rx="2.5" fill="#6366f1"/>
+        <rect x="28" y="6"  width="8" height="30" rx="2.5" fill="#6366f1" opacity=".75"/>
+      </svg>
+    </div>
     <div>
       <div class="header-title">Dashboard <span id="project-name">Jira</span></div>
       <div class="header-meta" id="header-meta">Jira Cloud · Selecciona un proyecto</div>
@@ -335,6 +412,7 @@
       </select>
     </div>
     <span id="last-updated">—</span>
+    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     <button class="btn-refresh" id="btn-refresh" onclick="reloadFromServer()">
       ↻ Actualizar
     </button>
@@ -438,7 +516,35 @@
 
 </div><!-- /container -->
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando<span id="loading-dots"></span></div>
+  </div>
+</div>
+
 <script>
+// ── LOADING OVERLAY ──
+let dotInterval;
+const DOT_STATES = ['', '.', '..', '...'];
+let dotIdx = 0;
+
+function showLoadingOverlay() {
+  document.getElementById('loading-overlay').classList.add('visible');
+  dotIdx = 0;
+  document.getElementById('loading-dots').textContent = '';
+  dotInterval = setInterval(() => {
+    dotIdx = (dotIdx + 1) % DOT_STATES.length;
+    document.getElementById('loading-dots').textContent = DOT_STATES[dotIdx];
+  }, 450);
+}
+
+function hideLoadingOverlay() {
+  document.getElementById('loading-overlay').classList.remove('visible');
+  clearInterval(dotInterval);
+}
+
 // ── STATE ──
 let allTasks = [];
 let filtered = [];
@@ -566,6 +672,7 @@ function onProjectChange() {
   localStorage.setItem('jira-project', currentProject);
   const proj = { key: currentProject, name: sel.options[sel.selectedIndex].text.split(' — ')[1] || currentProject };
   updateProjectLabel(proj);
+  showLoadingOverlay();
   reloadFromServer();
 }
 
@@ -588,6 +695,7 @@ async function reloadFromServer() {
   } finally {
     btn.classList.remove('loading');
     btn.textContent = '↻ Actualizar';
+    hideLoadingOverlay();
   }
 }
 
@@ -685,11 +793,20 @@ function updateKPIs(tasks) {
 
   const sortedStatuses = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]);
 
+  const doneCount = tasks.filter(t => t.statusCategory === 'done').length;
+  const pct = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
+
   let html = `
     <div class="kpi-card" style="--kpi-accent:#6366f1">
       <div class="kpi-icon">📋</div>
       <div class="kpi-value">${tasks.length}</div>
       <div class="kpi-label">Total</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#10b981">
+      <div class="kpi-icon" style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Completado</div>
+      <div class="kpi-value">${pct}%</div>
+      <div class="kpi-sublabel">${doneCount} de ${tasks.length} finalizadas</div>
+      <div class="kpi-progress-bar"><div class="kpi-progress-fill" style="width:${pct}%"></div></div>
     </div>`;
 
   sortedStatuses.forEach(([status, count]) => {
@@ -817,8 +934,22 @@ function escHtml(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── THEME ──
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('light', theme === 'light');
+  document.getElementById('btn-theme').textContent = theme === 'light' ? '🌙' : '☀️';
+}
+function toggleTheme() {
+  const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+  localStorage.setItem('jira-theme', next);
+  applyTheme(next);
+}
+
 // ── INIT ──
 (async () => {
+  // Restore theme
+  applyTheme(localStorage.getItem('jira-theme') || 'dark');
+
   // Check platform detection config
   try {
     const h = await fetch('/api/health').then(r => r.json());
